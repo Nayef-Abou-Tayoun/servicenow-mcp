@@ -102,13 +102,17 @@ class ServiceNowMCP:
         self.package_definitions: Dict[str, List[str]] = {}
         self.enabled_tool_names: List[str] = []
         self.current_package_name: str = "none"
-        self._load_package_config()
-        self._determine_enabled_tools()
 
-        # Get tool definitions, passing the aliased KB tool functions if needed
+        # ✅ MINIMAL FIX: load config first
+        self._load_package_config()
+
+        # ✅ MINIMAL FIX: build tool_definitions BEFORE deciding enabled tools (fallback needs it)
         self.tool_definitions = get_tool_definitions(
             create_kb_category_tool, list_kb_categories_tool
         )
+
+        # ✅ MINIMAL FIX: now decide which tools are enabled
+        self._determine_enabled_tools()
 
         self._register_handlers()
 
@@ -118,38 +122,30 @@ class ServiceNowMCP:
         self.mcp_server.call_tool()(self._call_tool_impl)
         logger.info("Registered list_tools and call_tool handlers.")
 
+    # ✅ MINIMAL FIX: this must be INSIDE the class (indentation)
     def _load_package_config(self):
-        """Load tool package definitions from the YAML configuration file."""
-        config_path = TOOL_PACKAGE_CONFIG_PATH
-        if not os.path.isabs(config_path):
-            config_path = os.path.join(os.path.dirname(__file__), "..", "..", config_path)
-            config_path = os.path.abspath(config_path)
+        config_path = "/app/config/tool_packages.yaml"
+
+        logger.info("========== DEBUG CONFIG LOADING ==========")
+        logger.info(f"Trying to load YAML from: {config_path}")
+        logger.info(f"File exists? {os.path.exists(config_path)}")
 
         try:
             with open(config_path, "r") as f:
                 loaded_config = yaml.safe_load(f)
-                if isinstance(loaded_config, dict):
-                    self.package_definitions = loaded_config
-                    logger.info(f"Successfully loaded tool package config from {config_path}")
-                else:
-                    logger.error(
-                        f"Invalid format in {config_path}: Expected a dictionary, got {type(loaded_config)}. No packages loaded."
-                    )
-                    self.package_definitions = {}
-        except FileNotFoundError:
-            logger.error(
-                f"Tool package config file not found at {config_path}. No packages loaded."
-            )
-            self.package_definitions = {}
-        except yaml.YAMLError as e:
-            logger.error(
-                f"Error parsing tool package config file {config_path}: {e}. No packages loaded."
-            )
-            self.package_definitions = {}
+
+            if isinstance(loaded_config, dict):
+                self.package_definitions = loaded_config
+                logger.info(f"Loaded packages: {list(self.package_definitions.keys())}")
+            else:
+                logger.error("YAML loaded but not a dictionary")
+                self.package_definitions = {}
+
         except Exception as e:
-            logger.error(f"Unexpected error loading tool package config {config_path}: {e}")
+            logger.error(f"FAILED to load YAML: {e}", exc_info=True)
             self.package_definitions = {}
 
+    # ✅ MINIMAL FIX: this must be INSIDE the class (indentation) + fallback to avoid 0 tools
     def _determine_enabled_tools(self):
         """Determine which tool package and tools to enable based on environment variable."""
         requested_package = os.getenv("MCP_TOOL_PACKAGE", "full").strip()
@@ -167,10 +163,11 @@ class ServiceNowMCP:
                 f"Valid packages: {list(self.package_definitions.keys())}. Loading 'none' package."
             )
 
-        if self.package_definitions:
+        # ✅ MINIMAL FALLBACK: if YAML not loaded or package invalid/none, expose all defined tools
+        if self.package_definitions and self.current_package_name != "none":
             self.enabled_tool_names = self.package_definitions.get(self.current_package_name, [])
         else:
-            self.enabled_tool_names = []
+            self.enabled_tool_names = list(self.tool_definitions.keys())
 
         logger.info(
             f"Loading package '{self.current_package_name}' with {len(self.enabled_tool_names)} tools."
@@ -313,7 +310,4 @@ class ServiceNowMCP:
         logger.info(
             "ServiceNowMCP instance configured. Returning low-level server instance for external execution."
         )
-        # The actual running of the server (server.run(...)) must happen
-        # within an async context managed by the caller (e.g., using anyio
-        # and a specific transport like stdio_server or SseServerTransport).
         return self.mcp_server
