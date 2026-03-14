@@ -1,0 +1,73 @@
+# Custom fields configuration for incident creation
+# Add your custom ServiceNow incident fields here
+# Each field should have a name, type, and description
+
+custom_fields:
+  # Standard custom fields
+  - name: location
+    type: string
+    required: false
+    description: Location of the incident
+  
+  - name: business_service
+    type: string
+    required: false
+    description: Business service affected
+  
+  - name: cmdb_ci
+    type: string
+    required: false
+    description: Configuration item
+  
+  - name: work_notes
+    type: string
+    required: false
+    description: Work notes to add to the incident
+  
+  # Network/Telecom specific custom fields
+  - name: u_area
+    type: string
+    required: false
+    description: Network area identifier
+  
+  - name: u_kpi_rsrp
+    type: number
+    required: false
+    description: KPI - Reference Signal Received Power (dBm)
+  
+  - name: u_kpi_sinr
+    type: number
+    required: false
+    description: KPI - Signal to Interference plus Noise Ratio (dB)
+  
+  - name: u_kpi_rsrq
+    type: number
+    required: false
+    description: KPI - Reference Signal Received Quality (dB)
+  
+  - name: u_packet_loss
+    type: number
+    required: false
+    description: Packet loss percentage
+  
+  - name: u_drop_rate
+    type: number
+    required: false
+    description: Call drop rate percentage
+  
+  - name: u_throughput_dl_mbps
+    type: number
+    required: false
+    description: Downlink throughput in Mbps
+  
+  - name: u_throughput_ul_mbps
+    type: number
+    required: false
+    description: Uplink throughput in Mbps
+  
+  - name: u_case_type
+    type: string
+    required: false
+    description: Case type classification
+
+# Made with Bob
