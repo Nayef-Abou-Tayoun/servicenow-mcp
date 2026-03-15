@@ -180,18 +180,25 @@ def create_incident(
         logger.info("Extended incident fields enabled - adding custom fields to request")
         if params.location:
             data["location"] = params.location
+            logger.info(f"Added location: {params.location}")
         if params.business_service:
             data["business_service"] = params.business_service
+            logger.info(f"Added business_service: {params.business_service}")
         if params.cmdb_ci:
             data["cmdb_ci"] = params.cmdb_ci
+            logger.info(f"Added cmdb_ci: {params.cmdb_ci}")
         if params.work_notes:
             data["work_notes"] = params.work_notes
+            logger.info(f"Added work_notes: {params.work_notes}")
         if params.u_area:
             data["u_area"] = params.u_area
+            logger.info(f"Added u_area: {params.u_area}")
         if params.u_kpi_rsrp:
             data["u_kpi_rsrp"] = params.u_kpi_rsrp
+            logger.info(f"Added u_kpi_rsrp: {params.u_kpi_rsrp}")
         if params.u_kpi_sinr:
             data["u_kpi_sinr"] = params.u_kpi_sinr
+            logger.info(f"Added u_kpi_sinr: {params.u_kpi_sinr}")
         if params.u_kpi_rsrq:
             data["u_kpi_rsrq"] = params.u_kpi_rsrq
         if params.u_packet_loss:
