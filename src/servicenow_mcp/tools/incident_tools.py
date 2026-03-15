@@ -4,6 +4,7 @@ Incident tools for the ServiceNow MCP server.
 This module provides tools for managing incidents in ServiceNow.
 """
 
+import json
 import logging
 import os
 from typing import Optional, List
@@ -178,6 +179,15 @@ def create_incident(
     # Add extended fields if enabled
     if _use_extended_fields():
         logger.info("Extended incident fields enabled - adding custom fields to request")
+        
+        # Log all received parameters for debugging
+        logger.info(f"Received params: location={params.location}, business_service={params.business_service}, "
+                   f"cmdb_ci={params.cmdb_ci}, work_notes={params.work_notes}, u_area={params.u_area}, "
+                   f"u_kpi_rsrp={params.u_kpi_rsrp}, u_kpi_sinr={params.u_kpi_sinr}, u_kpi_rsrq={params.u_kpi_rsrq}, "
+                   f"u_packet_loss={params.u_packet_loss}, u_drop_rate={params.u_drop_rate}, "
+                   f"u_throughput_dl_mbps={params.u_throughput_dl_mbps}, u_throughput_ul_mbps={params.u_throughput_ul_mbps}, "
+                   f"u_case_type={params.u_case_type}")
+        
         if params.location:
             data["location"] = params.location
             logger.info(f"Added location: {params.location}")
@@ -201,16 +211,24 @@ def create_incident(
             logger.info(f"Added u_kpi_sinr: {params.u_kpi_sinr}")
         if params.u_kpi_rsrq:
             data["u_kpi_rsrq"] = params.u_kpi_rsrq
+            logger.info(f"Added u_kpi_rsrq: {params.u_kpi_rsrq}")
         if params.u_packet_loss:
             data["u_packet_loss"] = params.u_packet_loss
+            logger.info(f"Added u_packet_loss: {params.u_packet_loss}")
         if params.u_drop_rate:
             data["u_drop_rate"] = params.u_drop_rate
+            logger.info(f"Added u_drop_rate: {params.u_drop_rate}")
         if params.u_throughput_dl_mbps:
             data["u_throughput_dl_mbps"] = params.u_throughput_dl_mbps
+            logger.info(f"Added u_throughput_dl_mbps: {params.u_throughput_dl_mbps}")
         if params.u_throughput_ul_mbps:
             data["u_throughput_ul_mbps"] = params.u_throughput_ul_mbps
+            logger.info(f"Added u_throughput_ul_mbps: {params.u_throughput_ul_mbps}")
         if params.u_case_type:
             data["u_case_type"] = params.u_case_type
+            logger.info(f"Added u_case_type: {params.u_case_type}")
+        
+        logger.info(f"Final data being sent to ServiceNow: {json.dumps(data, indent=2)}")
 
     # Make request
     try:
