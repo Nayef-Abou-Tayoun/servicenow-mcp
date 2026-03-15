@@ -42,13 +42,13 @@ class CreateIncidentParams(BaseModel):
     cmdb_ci: Optional[str] = Field(None, description="Configuration item")
     work_notes: Optional[str] = Field(None, description="Work notes to add to the incident")
     u_area: Optional[str] = Field(None, description="Network area identifier")
-    u_kpi_rsrp: Optional[float] = Field(None, description="KPI - Reference Signal Received Power (dBm)")
-    u_kpi_sinr: Optional[float] = Field(None, description="KPI - Signal to Interference plus Noise Ratio (dB)")
-    u_kpi_rsrq: Optional[float] = Field(None, description="KPI - Reference Signal Received Quality (dB)")
-    u_packet_loss: Optional[float] = Field(None, description="Packet loss percentage")
-    u_drop_rate: Optional[float] = Field(None, description="Call drop rate percentage")
-    u_throughput_dl_mbps: Optional[float] = Field(None, description="Downlink throughput in Mbps")
-    u_throughput_ul_mbps: Optional[float] = Field(None, description="Uplink throughput in Mbps")
+    u_kpi_rsrp: Optional[str] = Field(None, description="KPI - Reference Signal Received Power (dBm)")
+    u_kpi_sinr: Optional[str] = Field(None, description="KPI - Signal to Interference plus Noise Ratio (dB)")
+    u_kpi_rsrq: Optional[str] = Field(None, description="KPI - Reference Signal Received Quality (dB)")
+    u_packet_loss: Optional[str] = Field(None, description="Packet loss percentage")
+    u_drop_rate: Optional[str] = Field(None, description="Call drop rate percentage")
+    u_throughput_dl_mbps: Optional[str] = Field(None, description="Downlink throughput in Mbps")
+    u_throughput_ul_mbps: Optional[str] = Field(None, description="Uplink throughput in Mbps")
     u_case_type: Optional[str] = Field(None, description="Case type classification")
     
     class Config:
@@ -78,13 +78,13 @@ class UpdateIncidentParams(BaseModel):
     business_service: Optional[str] = Field(None, description="Business service affected")
     cmdb_ci: Optional[str] = Field(None, description="Configuration item")
     u_area: Optional[str] = Field(None, description="Network area identifier")
-    u_kpi_rsrp: Optional[float] = Field(None, description="KPI - Reference Signal Received Power (dBm)")
-    u_kpi_sinr: Optional[float] = Field(None, description="KPI - Signal to Interference plus Noise Ratio (dB)")
-    u_kpi_rsrq: Optional[float] = Field(None, description="KPI - Reference Signal Received Quality (dB)")
-    u_packet_loss: Optional[float] = Field(None, description="Packet loss percentage")
-    u_drop_rate: Optional[float] = Field(None, description="Call drop rate percentage")
-    u_throughput_dl_mbps: Optional[float] = Field(None, description="Downlink throughput in Mbps")
-    u_throughput_ul_mbps: Optional[float] = Field(None, description="Uplink throughput in Mbps")
+    u_kpi_rsrp: Optional[str] = Field(None, description="KPI - Reference Signal Received Power (dBm)")
+    u_kpi_sinr: Optional[str] = Field(None, description="KPI - Signal to Interference plus Noise Ratio (dB)")
+    u_kpi_rsrq: Optional[str] = Field(None, description="KPI - Reference Signal Received Quality (dB)")
+    u_packet_loss: Optional[str] = Field(None, description="Packet loss percentage")
+    u_drop_rate: Optional[str] = Field(None, description="Call drop rate percentage")
+    u_throughput_dl_mbps: Optional[str] = Field(None, description="Downlink throughput in Mbps")
+    u_throughput_ul_mbps: Optional[str] = Field(None, description="Uplink throughput in Mbps")
     u_case_type: Optional[str] = Field(None, description="Case type classification")
     
     class Config:
@@ -188,19 +188,19 @@ def create_incident(
             data["work_notes"] = params.work_notes
         if params.u_area:
             data["u_area"] = params.u_area
-        if params.u_kpi_rsrp is not None:
+        if params.u_kpi_rsrp:
             data["u_kpi_rsrp"] = params.u_kpi_rsrp
-        if params.u_kpi_sinr is not None:
+        if params.u_kpi_sinr:
             data["u_kpi_sinr"] = params.u_kpi_sinr
-        if params.u_kpi_rsrq is not None:
+        if params.u_kpi_rsrq:
             data["u_kpi_rsrq"] = params.u_kpi_rsrq
-        if params.u_packet_loss is not None:
+        if params.u_packet_loss:
             data["u_packet_loss"] = params.u_packet_loss
-        if params.u_drop_rate is not None:
+        if params.u_drop_rate:
             data["u_drop_rate"] = params.u_drop_rate
-        if params.u_throughput_dl_mbps is not None:
+        if params.u_throughput_dl_mbps:
             data["u_throughput_dl_mbps"] = params.u_throughput_dl_mbps
-        if params.u_throughput_ul_mbps is not None:
+        if params.u_throughput_ul_mbps:
             data["u_throughput_ul_mbps"] = params.u_throughput_ul_mbps
         if params.u_case_type:
             data["u_case_type"] = params.u_case_type
@@ -329,19 +329,19 @@ def update_incident(
             data["cmdb_ci"] = params.cmdb_ci
         if params.u_area:
             data["u_area"] = params.u_area
-        if params.u_kpi_rsrp is not None:
+        if params.u_kpi_rsrp:
             data["u_kpi_rsrp"] = params.u_kpi_rsrp
-        if params.u_kpi_sinr is not None:
+        if params.u_kpi_sinr:
             data["u_kpi_sinr"] = params.u_kpi_sinr
-        if params.u_kpi_rsrq is not None:
+        if params.u_kpi_rsrq:
             data["u_kpi_rsrq"] = params.u_kpi_rsrq
-        if params.u_packet_loss is not None:
+        if params.u_packet_loss:
             data["u_packet_loss"] = params.u_packet_loss
-        if params.u_drop_rate is not None:
+        if params.u_drop_rate:
             data["u_drop_rate"] = params.u_drop_rate
-        if params.u_throughput_dl_mbps is not None:
+        if params.u_throughput_dl_mbps:
             data["u_throughput_dl_mbps"] = params.u_throughput_dl_mbps
-        if params.u_throughput_ul_mbps is not None:
+        if params.u_throughput_ul_mbps:
             data["u_throughput_ul_mbps"] = params.u_throughput_ul_mbps
         if params.u_case_type:
             data["u_case_type"] = params.u_case_type
