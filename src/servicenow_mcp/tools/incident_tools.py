@@ -5,6 +5,7 @@ This module provides tools for managing incidents in ServiceNow.
 """
 
 import logging
+import os
 from typing import Optional, List
 
 import requests
@@ -14,6 +15,9 @@ from servicenow_mcp.auth.auth_manager import AuthManager
 from servicenow_mcp.utils.config import ServerConfig
 
 logger = logging.getLogger(__name__)
+
+# Check if extended mode is enabled via environment variable
+USE_EXTENDED_INCIDENT_FIELDS = os.getenv("USE_EXTENDED_INCIDENT_FIELDS", "false").lower() == "true"
 
 
 class CreateIncidentParams(BaseModel):
@@ -29,6 +33,24 @@ class CreateIncidentParams(BaseModel):
     urgency: Optional[str] = Field(None, description="Urgency of the incident")
     assigned_to: Optional[str] = Field(None, description="User assigned to the incident")
     assignment_group: Optional[str] = Field(None, description="Group assigned to the incident")
+    
+    # Extended fields (enabled via USE_EXTENDED_INCIDENT_FIELDS=true)
+    location: Optional[str] = Field(None, description="Location of the incident")
+    business_service: Optional[str] = Field(None, description="Business service affected")
+    cmdb_ci: Optional[str] = Field(None, description="Configuration item")
+    work_notes: Optional[str] = Field(None, description="Work notes to add to the incident")
+    u_area: Optional[str] = Field(None, description="Network area identifier")
+    u_kpi_rsrp: Optional[float] = Field(None, description="KPI - Reference Signal Received Power (dBm)")
+    u_kpi_sinr: Optional[float] = Field(None, description="KPI - Signal to Interference plus Noise Ratio (dB)")
+    u_kpi_rsrq: Optional[float] = Field(None, description="KPI - Reference Signal Received Quality (dB)")
+    u_packet_loss: Optional[float] = Field(None, description="Packet loss percentage")
+    u_drop_rate: Optional[float] = Field(None, description="Call drop rate percentage")
+    u_throughput_dl_mbps: Optional[float] = Field(None, description="Downlink throughput in Mbps")
+    u_throughput_ul_mbps: Optional[float] = Field(None, description="Uplink throughput in Mbps")
+    u_case_type: Optional[str] = Field(None, description="Case type classification")
+    
+    class Config:
+        extra = "allow"  # Allow additional fields not explicitly defined
 
 
 class UpdateIncidentParams(BaseModel):
@@ -133,6 +155,35 @@ def create_incident(
         data["assigned_to"] = params.assigned_to
     if params.assignment_group:
         data["assignment_group"] = params.assignment_group
+    
+    # Add extended fields if enabled
+    if USE_EXTENDED_INCIDENT_FIELDS:
+        if params.location:
+            data["location"] = params.location
+        if params.business_service:
+            data["business_service"] = params.business_service
+        if params.cmdb_ci:
+            data["cmdb_ci"] = params.cmdb_ci
+        if params.work_notes:
+            data["work_notes"] = params.work_notes
+        if params.u_area:
+            data["u_area"] = params.u_area
+        if params.u_kpi_rsrp is not None:
+            data["u_kpi_rsrp"] = params.u_kpi_rsrp
+        if params.u_kpi_sinr is not None:
+            data["u_kpi_sinr"] = params.u_kpi_sinr
+        if params.u_kpi_rsrq is not None:
+            data["u_kpi_rsrq"] = params.u_kpi_rsrq
+        if params.u_packet_loss is not None:
+            data["u_packet_loss"] = params.u_packet_loss
+        if params.u_drop_rate is not None:
+            data["u_drop_rate"] = params.u_drop_rate
+        if params.u_throughput_dl_mbps is not None:
+            data["u_throughput_dl_mbps"] = params.u_throughput_dl_mbps
+        if params.u_throughput_ul_mbps is not None:
+            data["u_throughput_ul_mbps"] = params.u_throughput_ul_mbps
+        if params.u_case_type:
+            data["u_case_type"] = params.u_case_type
 
     # Make request
     try:
