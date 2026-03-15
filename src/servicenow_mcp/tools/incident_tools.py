@@ -16,8 +16,10 @@ from servicenow_mcp.utils.config import ServerConfig
 
 logger = logging.getLogger(__name__)
 
-# Check if extended mode is enabled via environment variable
-USE_EXTENDED_INCIDENT_FIELDS = os.getenv("USE_EXTENDED_INCIDENT_FIELDS", "false").lower() == "true"
+
+def _use_extended_fields() -> bool:
+    """Check if extended incident fields are enabled via environment variable."""
+    return os.getenv("USE_EXTENDED_INCIDENT_FIELDS", "false").lower() == "true"
 
 
 class CreateIncidentParams(BaseModel):
@@ -174,7 +176,8 @@ def create_incident(
         data["assignment_group"] = params.assignment_group
     
     # Add extended fields if enabled
-    if USE_EXTENDED_INCIDENT_FIELDS:
+    if _use_extended_fields():
+        logger.info("Extended incident fields enabled - adding custom fields to request")
         if params.location:
             data["location"] = params.location
         if params.business_service:
@@ -316,7 +319,8 @@ def update_incident(
         data["close_code"] = params.close_code
     
     # Add extended fields if enabled
-    if USE_EXTENDED_INCIDENT_FIELDS:
+    if _use_extended_fields():
+        logger.info("Extended incident fields enabled - adding custom fields to update request")
         if params.location:
             data["location"] = params.location
         if params.business_service:
