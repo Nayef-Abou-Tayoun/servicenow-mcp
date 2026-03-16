@@ -130,8 +130,10 @@ def chat():
         
         # Check if API key is set
         if not IBM_CLOUD_API_KEY:
-            logger.error("IBM_CLOUD_API_KEY not set")
-            return jsonify({"error": "IBM_CLOUD_API_KEY not configured"}), 500
+            logger.warning("IBM_CLOUD_API_KEY not set - returning demo response")
+            return jsonify({
+                "response": f"Demo mode: Received your message '{message[:50]}...' but IBM_CLOUD_API_KEY is not configured. Please set the API key to enable full functionality."
+            }), 200
         
         # Convert to watsonx format
         watsonx_payload = {
