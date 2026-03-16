@@ -154,6 +154,19 @@ class ServiceNowMCP:
         """Determine which tool package and tools to enable based on environment variable."""
         requested_package = os.getenv("MCP_TOOL_PACKAGE", "full").strip()
 
+        # If package definitions failed to load, use all available tools as fallback
+        if not self.package_definitions:
+            logger.warning(
+                "Tool package config not loaded. Using all available tools as fallback."
+            )
+            self.current_package_name = "all_tools_fallback"
+            # Get all tool names from tool_definitions
+            self.enabled_tool_names = list(self.tool_definitions.keys())
+            logger.info(
+                f"Fallback mode: Loading all {len(self.enabled_tool_names)} available tools."
+            )
+            return
+
         if not requested_package:
             self.current_package_name = "full"
             logger.info("MCP_TOOL_PACKAGE is empty, defaulting to 'full' package.")
@@ -167,10 +180,7 @@ class ServiceNowMCP:
                 f"Valid packages: {list(self.package_definitions.keys())}. Loading 'none' package."
             )
 
-        if self.package_definitions:
-            self.enabled_tool_names = self.package_definitions.get(self.current_package_name, [])
-        else:
-            self.enabled_tool_names = []
+        self.enabled_tool_names = self.package_definitions.get(self.current_package_name, [])
 
         logger.info(
             f"Loading package '{self.current_package_name}' with {len(self.enabled_tool_names)} tools."
