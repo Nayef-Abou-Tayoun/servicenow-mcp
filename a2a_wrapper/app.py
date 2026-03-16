@@ -90,8 +90,7 @@ def health():
 def chat():
     """
     Main chat endpoint for A2A protocol
-    Accepts: {"message": "user message"} or {"query": "user message"}
-    Returns: {"response": "agent response"}
+    Supports both simple format and A2A JSON-RPC format
     """
     # Handle GET requests with usage information
     if request.method == 'GET':
@@ -101,19 +100,28 @@ def chat():
             "description": "Chat endpoint for A2A protocol",
             "usage": {
                 "content_type": "application/json",
-                "body": {
+                "simple_format": {
                     "message": "Your message here"
                 },
-                "example": {
-                    "message": "Hello, how can you help me?"
+                "a2a_jsonrpc_format": {
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "method": "message/send",
+                    "params": {
+                        "message": {
+                            "kind": "message",
+                            "role": "user",
+                            "parts": [{"kind": "text", "text": "Your message here"}]
+                        }
+                    }
                 }
             },
             "curl_example": 'curl -X POST ' + request.url + ' -H "Content-Type: application/json" -d \'{"message": "Hello"}\''
         }), 200
+    
     try:
         logger.info("=== Chat endpoint called ===")
         
-        # Get message from ContextForge A2A format
         data = request.json
         logger.info(f"Received data: {data}")
         
@@ -121,7 +129,23 @@ def chat():
             logger.error("No JSON data provided")
             return jsonify({"error": "No JSON data provided"}), 400
         
-        message = data.get('message') or data.get('query') or data.get('content', '')
+        # Extract message from either simple format or A2A JSON-RPC format
+        message = None
+        
+        # Check for A2A JSON-RPC format
+        if data.get('jsonrpc') == '2.0' and data.get('method') == 'message/send':
+            params = data.get('params', {})
+            msg_obj = params.get('message', {})
+            parts = msg_obj.get('parts', [])
+            if parts and len(parts) > 0:
+                message = parts[0].get('text', '')
+            logger.info(f"Extracted from A2A JSON-RPC format: {message}")
+        
+        # Fallback to simple format
+        if not message:
+            message = data.get('message') or data.get('query') or data.get('content', '')
+            logger.info(f"Extracted from simple format: {message}")
+        
         if not message:
             logger.error(f"No message found in data: {data}")
             return jsonify({"error": "No message provided"}), 400
