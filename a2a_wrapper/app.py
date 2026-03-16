@@ -85,6 +85,203 @@ def health():
     """Health check endpoint"""
     return jsonify({"status": "healthy"}), 200
 
+@app.route('/.well-known/agent-card.json', methods=['GET'])
+@app.route('/.well-known/agent.json', methods=['GET'])
+def agent_card():
+    """A2A v0.3.0 Agent Card endpoint"""
+    agent_name = os.getenv('A2A_AGENT_NAME', 'watsonx-agent')
+    public_url = os.getenv('A2A_PUBLIC_URL', request.host_url.rstrip('/'))
+    protocol_version = os.getenv('A2A_PROTOCOL_VERSION', '0.3.0')
+    
+    return jsonify({
+        "protocolVersion": protocol_version,
+        "name": agent_name,
+        "description": "WatsonX AI Agent with A2A protocol support for network diagnostics and incident analysis",
+        "url": public_url,
+        "capabilities": {
+            "streaming": False,
+            "tools": []
+        },
+        "endpoints": {
+            "jsonrpc": f"{public_url}/",
+            "health": f"{public_url}/health",
+            "chat": f"{public_url}/chat"
+        }
+    }), 200
+
+
+@app.route('/', methods=['POST'])
+def jsonrpc_endpoint():
+    """
+    A2A JSON-RPC 2.0 endpoint (POST /)
+    Handles message/send, tasks/get, tasks/cancel methods
+    """
+    try:
+        data = request.json
+        logger.info(f"JSON-RPC request: {data}")
+        
+        if not data or data.get('jsonrpc') != '2.0':
+            return jsonify({
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32600,
+                    "message": "Invalid Request"
+                },
+                "id": data.get('id') if data else None
+            }), 400
+        
+        method = data.get('method')
+        params = data.get('params', {})
+        request_id = data.get('id')
+        
+        if method == 'message/send':
+            # Extract message from A2A format
+            msg_obj = params.get('message', {})
+            parts = msg_obj.get('parts', [])
+            message_text = ''
+            if parts and len(parts) > 0:
+                message_text = parts[0].get('text', '')
+            
+            logger.info(f"Processing message: {message_text[:100]}...")
+            
+            # Check if API key is set
+            if not IBM_CLOUD_API_KEY:
+                logger.warning("IBM_CLOUD_API_KEY not set - returning demo response")
+                return jsonify({
+                    "jsonrpc": "2.0",
+                    "result": {
+                        "message": {
+                            "kind": "message",
+                            "role": "assistant",
+                            "parts": [{
+                                "kind": "text",
+                                "text": f"Demo mode: Received '{message_text[:50]}...' but IBM_CLOUD_API_KEY is not configured. Please set the API key to enable full functionality."
+                            }]
+                        }
+                    },
+                    "id": request_id
+                }), 200
+            
+            # Call WatsonX
+            watsonx_payload = {
+                "messages": [
+                    {"role": "user", "content": message_text}
+                ]
+            }
+            
+            token = get_iam_token()
+            response = requests.post(
+                WATSONX_ENDPOINT,
+                json=watsonx_payload,
+                headers={
+                    'Authorization': f'Bearer {token}',
+                    'Content-Type': 'application/json'
+                },
+                timeout=60
+            )
+            
+            if response.ok:
+                parsed_response = parse_sse_response(response.text)
+                response_text = parsed_response.get('response', str(parsed_response))
+                
+                return jsonify({
+                    "jsonrpc": "2.0",
+                    "result": {
+                        "message": {
+                            "kind": "message",
+                            "role": "assistant",
+                            "parts": [{
+                                "kind": "text",
+                                "text": response_text
+                            }]
+                        }
+                    },
+                    "id": request_id
+                }), 200
+            else:
+                return jsonify({
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32603,
+                        "message": f"WatsonX error: {response.status_code}"
+                    },
+                    "id": request_id
+                }), 500
+        
+        elif method == 'tasks/get':
+            # Not implemented - return empty tasks
+            return jsonify({
+                "jsonrpc": "2.0",
+                "result": {"tasks": []},
+                "id": request_id
+            }), 200
+        
+        elif method == 'tasks/cancel':
+            # Not implemented - return success
+            return jsonify({
+                "jsonrpc": "2.0",
+                "result": {"success": True},
+                "id": request_id
+            }), 200
+        
+        else:
+            return jsonify({
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32601,
+                    "message": f"Method not found: {method}"
+                },
+                "id": request_id
+            }), 404
+            
+    except Exception as e:
+        logger.error(f"JSON-RPC error: {str(e)}", exc_info=True)
+        return jsonify({
+            "jsonrpc": "2.0",
+            "error": {
+                "code": -32603,
+                "message": str(e)
+            },
+            "id": data.get('id') if data else None
+        }), 500
+
+
+@app.route('/run', methods=['POST'])
+def run_compat():
+    """
+    Compatibility helper endpoint (POST /run)
+    Not part of A2A spec but useful for simple testing
+    """
+    try:
+        data = request.json
+        message = data.get('message', '') if data else ''
+        
+        if not message:
+            return jsonify({"error": "No message provided"}), 400
+        
+        # Redirect to JSON-RPC endpoint
+        jsonrpc_request = {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "message/send",
+            "params": {
+                "message": {
+                    "kind": "message",
+                    "role": "user",
+                    "parts": [{"kind": "text", "text": message}]
+                }
+            }
+        }
+        
+        # Call the JSON-RPC endpoint internally
+        with app.test_request_context('/', method='POST', json=jsonrpc_request):
+            return jsonrpc_endpoint()
+            
+    except Exception as e:
+        logger.error(f"Run endpoint error: {str(e)}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
+
 
 @app.route('/chat', methods=['GET', 'POST'])
 def chat():
