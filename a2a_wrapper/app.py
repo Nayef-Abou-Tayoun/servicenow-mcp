@@ -7,6 +7,8 @@ from flask import Flask, request, jsonify
 import requests
 import os
 import logging
+import json
+import re
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -39,6 +41,43 @@ def get_iam_token():
     except Exception as e:
         logger.error(f"Failed to get IAM token: {e}")
         raise
+
+
+def parse_sse_response(sse_text):
+    """Parse Server-Sent Events response and extract the complete message"""
+    try:
+        # Extract all content chunks from SSE format
+        content_parts = []
+        for line in sse_text.split('\n'):
+            if line.startswith('data: '):
+                try:
+                    data = json.loads(line[6:])  # Remove 'data: ' prefix
+                    if 'choices' in data and len(data['choices']) > 0:
+                        delta = data['choices'][0].get('delta', {})
+                        if 'content' in delta:
+                            content_parts.append(delta['content'])
+                except json.JSONDecodeError:
+                    continue
+        
+        # Join all content parts
+        full_content = ''.join(content_parts)
+        
+        # Try to extract JSON from markdown code blocks
+        json_match = re.search(r'```json\s*(\{.*?\})\s*```', full_content, re.DOTALL)
+        if json_match:
+            return json.loads(json_match.group(1))
+        
+        # Try to find JSON directly
+        json_match = re.search(r'(\{.*\})', full_content, re.DOTALL)
+        if json_match:
+            return json.loads(json_match.group(1))
+        
+        # If no JSON found, return the text as-is
+        return {"response": full_content}
+        
+    except Exception as e:
+        logger.error(f"Failed to parse SSE response: {e}")
+        return {"response": sse_text}
 
 
 @app.route('/health', methods=['GET'])
@@ -90,16 +129,16 @@ def chat():
         logger.info(f"watsonx response status: {response.status_code}")
         
         if response.ok:
-            # Try to parse JSON response
-            try:
-                watsonx_response = response.json()
-                # Extract the actual response text
-                response_text = watsonx_response.get('results', [{}])[0].get('generated_text', str(watsonx_response))
-            except:
-                response_text = response.text
+            # Parse the SSE streaming response
+            parsed_response = parse_sse_response(response.text)
             
+            # If it's already a dict with target/payload, return it directly
+            if isinstance(parsed_response, dict) and 'target' in parsed_response:
+                return jsonify(parsed_response)
+            
+            # Otherwise wrap it in response field
             return jsonify({
-                "response": response_text
+                "response": json.dumps(parsed_response) if isinstance(parsed_response, dict) else str(parsed_response)
             })
         else:
             logger.error(f"watsonx error: {response.status_code} - {response.text}")
