@@ -86,13 +86,30 @@ def health():
     return jsonify({"status": "healthy"}), 200
 
 
-@app.route('/chat', methods=['POST'])
+@app.route('/chat', methods=['GET', 'POST'])
 def chat():
     """
     Main chat endpoint for A2A protocol
     Accepts: {"message": "user message"} or {"query": "user message"}
     Returns: {"response": "agent response"}
     """
+    # Handle GET requests with usage information
+    if request.method == 'GET':
+        return jsonify({
+            "endpoint": "/chat",
+            "method": "POST",
+            "description": "Chat endpoint for A2A protocol",
+            "usage": {
+                "content_type": "application/json",
+                "body": {
+                    "message": "Your message here"
+                },
+                "example": {
+                    "message": "Hello, how can you help me?"
+                }
+            },
+            "curl_example": 'curl -X POST ' + request.url + ' -H "Content-Type: application/json" -d \'{"message": "Hello"}\''
+        }), 200
     try:
         logger.info("=== Chat endpoint called ===")
         
