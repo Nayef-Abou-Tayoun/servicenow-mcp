@@ -94,16 +94,27 @@ def chat():
     Returns: {"response": "agent response"}
     """
     try:
+        logger.info("=== Chat endpoint called ===")
+        
         # Get message from ContextForge A2A format
         data = request.json
+        logger.info(f"Received data: {data}")
+        
         if not data:
+            logger.error("No JSON data provided")
             return jsonify({"error": "No JSON data provided"}), 400
         
         message = data.get('message') or data.get('query') or data.get('content', '')
         if not message:
+            logger.error(f"No message found in data: {data}")
             return jsonify({"error": "No message provided"}), 400
         
-        logger.info(f"Received message: {message[:100]}...")
+        logger.info(f"Processing message: {message[:100]}...")
+        
+        # Check if API key is set
+        if not IBM_CLOUD_API_KEY:
+            logger.error("IBM_CLOUD_API_KEY not set")
+            return jsonify({"error": "IBM_CLOUD_API_KEY not configured"}), 500
         
         # Convert to watsonx format
         watsonx_payload = {
@@ -113,7 +124,9 @@ def chat():
         }
         
         # Get token and call watsonx
+        logger.info("Getting IAM token...")
         token = get_iam_token()
+        logger.info("IAM token obtained successfully")
         
         logger.info(f"Calling watsonx endpoint: {WATSONX_ENDPOINT}")
         response = requests.post(
@@ -123,7 +136,7 @@ def chat():
                 'Authorization': f'Bearer {token}',
                 'Content-Type': 'application/json'
             },
-            timeout=30
+            timeout=60  # Increased timeout to 60 seconds
         )
         
         logger.info(f"watsonx response status: {response.status_code}")
