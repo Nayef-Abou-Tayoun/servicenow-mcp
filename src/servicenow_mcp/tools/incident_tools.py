@@ -58,6 +58,7 @@ class CreateIncidentParams(BaseModel):
     u_context_notes: Optional[str] = Field(None, description="Context notes (string)", json_schema_extra={"type": "string"})
     u_context_score: Optional[str] = Field(None, description="Context score as float (string, e.g. '80.0')", json_schema_extra={"type": "string"})
     u_incident_priority: Optional[str] = Field(None, description="Incident priority (string)", json_schema_extra={"type": "string"})
+    u_final_severity_score: Optional[str] = Field(None, description="Final severity score as float (string, e.g. '90.5')", json_schema_extra={"type": "string"})
     
     class Config:
         extra = "allow"  # Allow additional fields not explicitly defined
@@ -101,6 +102,7 @@ class UpdateIncidentParams(BaseModel):
     u_context_notes: Optional[str] = Field(None, description="Context notes (string)", json_schema_extra={"type": "string"})
     u_context_score: Optional[str] = Field(None, description="Context score as float (string, e.g. '80.0')", json_schema_extra={"type": "string"})
     u_incident_priority: Optional[str] = Field(None, description="Incident priority (string)", json_schema_extra={"type": "string"})
+    u_final_severity_score: Optional[str] = Field(None, description="Final severity score as float (string, e.g. '90.5')", json_schema_extra={"type": "string"})
     
     class Config:
         extra = "allow"  # Allow additional fields not explicitly defined
@@ -203,7 +205,8 @@ def create_incident(
                    f"u_case_type={params.u_case_type}, u_customer_impact_note0={params.u_customer_impact_note0}, "
                    f"u_network_quality_score={params.u_network_quality_score}, u_network_quality_interpretation={params.u_network_quality_interpretation}, "
                    f"u_context_environment_impact_score={params.u_context_environment_impact_score}, u_context_notes={params.u_context_notes}, "
-                   f"u_context_score={params.u_context_score}, u_incident_priority={params.u_incident_priority}")
+                   f"u_context_score={params.u_context_score}, u_incident_priority={params.u_incident_priority}, "
+                   f"u_final_severity_score={params.u_final_severity_score}")
         
         if params.location:
             data["location"] = params.location
@@ -265,6 +268,9 @@ def create_incident(
         if params.u_incident_priority:
             data["u_incident_priority"] = params.u_incident_priority
             logger.info(f"Added u_incident_priority: {params.u_incident_priority}")
+        if params.u_final_severity_score:
+            data["u_final_severity_score"] = params.u_final_severity_score
+            logger.info(f"Added u_final_severity_score: {params.u_final_severity_score}")
         
         logger.info(f"Final data being sent to ServiceNow: {json.dumps(data, indent=2)}")
 
@@ -422,6 +428,8 @@ def update_incident(
             data["u_context_score"] = params.u_context_score
         if params.u_incident_priority:
             data["u_incident_priority"] = params.u_incident_priority
+        if params.u_final_severity_score:
+            data["u_final_severity_score"] = params.u_final_severity_score
 
     # Make request
     try:
