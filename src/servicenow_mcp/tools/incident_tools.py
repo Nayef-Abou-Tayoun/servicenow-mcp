@@ -51,6 +51,7 @@ class CreateIncidentParams(BaseModel):
     u_throughput_dl_mbps: Optional[str] = Field(None, description="Downlink throughput in Mbps (string, e.g. '100.5')", json_schema_extra={"type": "string"})
     u_throughput_ul_mbps: Optional[str] = Field(None, description="Uplink throughput in Mbps (string, e.g. '50.3')", json_schema_extra={"type": "string"})
     u_case_type: Optional[str] = Field(None, description="Case type classification (string)", json_schema_extra={"type": "string"})
+    u_customer_impact_note0: Optional[str] = Field(None, description="Customer impact notes (string)", json_schema_extra={"type": "string"})
     
     class Config:
         extra = "allow"  # Allow additional fields not explicitly defined
@@ -87,6 +88,7 @@ class UpdateIncidentParams(BaseModel):
     u_throughput_dl_mbps: Optional[str] = Field(None, description="Downlink throughput in Mbps (string, e.g. '100.5')", json_schema_extra={"type": "string"})
     u_throughput_ul_mbps: Optional[str] = Field(None, description="Uplink throughput in Mbps (string, e.g. '50.3')", json_schema_extra={"type": "string"})
     u_case_type: Optional[str] = Field(None, description="Case type classification (string)", json_schema_extra={"type": "string"})
+    u_customer_impact_note0: Optional[str] = Field(None, description="Customer impact notes (string)", json_schema_extra={"type": "string"})
     
     class Config:
         extra = "allow"  # Allow additional fields not explicitly defined
@@ -186,7 +188,7 @@ def create_incident(
                    f"u_kpi_rsrp={params.u_kpi_rsrp}, u_kpi_sinr={params.u_kpi_sinr}, u_kpi_rsrq={params.u_kpi_rsrq}, "
                    f"u_packet_loss={params.u_packet_loss}, u_drop_rate={params.u_drop_rate}, "
                    f"u_throughput_dl_mbps={params.u_throughput_dl_mbps}, u_throughput_ul_mbps={params.u_throughput_ul_mbps}, "
-                   f"u_case_type={params.u_case_type}")
+                   f"u_case_type={params.u_case_type}, u_customer_impact_note0={params.u_customer_impact_note0}")
         
         if params.location:
             data["location"] = params.location
@@ -227,6 +229,9 @@ def create_incident(
         if params.u_case_type:
             data["u_case_type"] = params.u_case_type
             logger.info(f"Added u_case_type: {params.u_case_type}")
+        if params.u_customer_impact_note0:
+            data["u_customer_impact_note0"] = params.u_customer_impact_note0
+            logger.info(f"Added u_customer_impact_note0: {params.u_customer_impact_note0}")
         
         logger.info(f"Final data being sent to ServiceNow: {json.dumps(data, indent=2)}")
 
@@ -370,6 +375,8 @@ def update_incident(
             data["u_throughput_ul_mbps"] = params.u_throughput_ul_mbps
         if params.u_case_type:
             data["u_case_type"] = params.u_case_type
+        if params.u_customer_impact_note0:
+            data["u_customer_impact_note0"] = params.u_customer_impact_note0
 
     # Make request
     try:
